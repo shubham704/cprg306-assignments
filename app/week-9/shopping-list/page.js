@@ -1,19 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ItemList from "./item-list";
 import NewItem from "./new-item";
 import MealIdeas from "./meal-ideas";
+import { useUserAuth } from "../_utils/auth-context";
+import { addItem, getItems } from "../_services/shopping-list-service";
+
 const Page = () => {
-  const [items, setItems] = useState(itemsData);
+  const [items, setItems] = useState([]);
   const [mealIdeas, setMealIdeas] = useState([]);
   const [selectedItemName, setSelectedItemName] = useState("");
+  const { user, gitHubSignIn, firebaseSignOut } = useUserAuth();
 
   // Event handler to add a new item
-  const handleAddItem = (newItem) => {
-    setItems((prevItems) => [...prevItems, newItem]);
-  };
+  async function handleAddItem(newItem) {
+    const item = {
+      name: newItem.name,
+      quantity: newItem.quantity,
+      category: newItem.category,
+    };
+    try {
+      const itemId = await addItem(user.uid, item);
+      console.log(itemId);
+    } catch (error) {
+      console.log(error);
+    }
+    setItems((prevItems) => [...prevItems, item]);
+  }
 
+  async function handleGetItem() {
+    const data = await getItems(user.uid); // Ensure to await the async function
+    setItems(data);
+  }
   // Event handler to select an item
   const handleItemSelect = (item) => {
     if (item.name.includes(",")) {
@@ -30,6 +49,12 @@ const Page = () => {
 
   return (
     <div className="flex">
+      <button
+        className="bg-orange-700 p-1 m-2 mt-10 w-28 h-10"
+        onClick={handleGetItem}
+      >
+        get item
+      </button>
       <div class="flex-1 max-w-sm m-2">
         {/* Render NewItem component and pass handleAddItem as onAddItem prop */}
         <NewItem onAddItem={handleAddItem} />
